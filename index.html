@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון חוק ה-30% של Apex</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: center;
+            margin: 50px;
+            background-color: #f4f4f9;
+        }
+        .calculator {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input, select {
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            text-align: right;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>מחשבון חוק ה-30% של Apex Trader Funding</h2>
+        <label for="accountSize">גודל התיק ($):</label>
+        <input type="number" id="accountSize" placeholder="הזן גודל התיק" min="1000" value="50000">
+        
+        <label for="tradingDays">מספר ימי מסחר:</label>
+        <input type="number" id="tradingDays" placeholder="הזן מספר ימי מסחר" min="1" value="8">
+        
+        <label for="totalProfits">סך הרווחים ($):</label>
+        <input type="number" id="totalProfits" placeholder="הזן סך הרווחים" min="0" value="6400">
+        
+        <label for="highestDailyProfit">הרווח היומי הגבוה ביותר ($):</label>
+        <input type="number" id="highestDailyProfit" placeholder="הזן רווח יומי גבוה" min="0" value="800">
+        
+        <label for="profitSplit">חלוקת רווחים:</label>
+        <select id="profitSplit">
+            <option value="0.9">90% (עד $25,000 ראשונים)</option>
+            <option value="0.8">80% (סטנדרטי)</option>
+        </select>
+        
+        <button onclick="calculate30PercentRule()">חשב</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculate30PercentRule() {
+            const accountSize = parseFloat(document.getElementById('accountSize').value);
+            const tradingDays = parseInt(document.getElementById('tradingDays').value);
+            const totalProfits = parseFloat(document.getElementById('totalProfits').value);
+            const highestDailyProfit = parseFloat(document.getElementById('highestDailyProfit').value);
+            const profitSplit = parseFloat(document.getElementById('profitSplit').value);
+            const resultDiv = document.getElementById('result');
+
+            // בדיקת תקינות הקלט
+            if (isNaN(accountSize) || accountSize < 1000) {
+                resultDiv.innerHTML = 'אנא הזן גודל תיק תקין (מינימום $1,000).';
+                resultDiv.style.color = 'red';
+                return;
+            }
+            if (isNaN(tradingDays) || tradingDays < 1) {
+                resultDiv.innerHTML = 'אנא הזן מספר ימי מסחר תקין (מינימום 1).';
+                resultDiv.style.color = 'red';
+                return;
+            }
+            if (isNaN(totalProfits) || totalProfits <= 0) {
+                resultDiv.innerHTML = 'אנא הזן סך רווחים תקין (חייב להיות גדול מ-0).';
+                resultDiv.style.color = 'red';
+                return;
+            }
+            if (isNaN(highestDailyProfit) || highestDailyProfit < 0) {
+                resultDiv.innerHTML = 'אנא הזן רווח יומי גבוה תקין (לא יכול להיות שלילי).';
+                resultDiv.style.color = 'red';
+                return;
+            }
+
+            // חישובים
+            const drawdownLimit = accountSize * 0.06; // מגבלת הפסד (6% מגודל התיק)
+            const dailyAverageProfit = totalProfits / tradingDays; // רווח יומי ממוצע
+            const dailyAveragePercent = (dailyAverageProfit / accountSize) * 100; // אחוז רווח יומי
+            const maxAllowedDailyProfit = totalProfits * 0.3; // רווח יומי מרבי לפי חוק ה-30%
+            const percentage = (highestDailyProfit / totalProfits) * 100; // אחוז הרווח היומי הגבוה
+            const yourPayout = totalProfits * profitSplit; // הסכום שתקבל לאחר חלוקת רווחים
+
+            let result = `<h3>תוצאות:</h3>`;
+            result += `<b>גודל התיק:</b> $${accountSize.toFixed(2)}<br>`;
+            result += `<b>מגבלת הפסד (Trailing Drawdown):</b> $${drawdownLimit.toFixed(2)}<br>`;
+            result += `<b>מספר ימי מסחר:</b> ${tradingDays}<br>`;
+
+            // בדיקת ימי מסחר
+            if (tradingDays < 6) {
+                result += `<span style="color: red;">❌ לא עמדת במינימום של 6 ימי מסחר. סחר עוד ${6 - tradingDays} ימים לפחות.</span><br>`;
+            } else {
+                result += `<span style="color: green;">✅ עמדת במינימום של 6 ימי מסחר.</span><br>`;
+            }
+
+            // בדיקת חוק ה-30%
+            if (highestDailyProfit <= maxAllowedDailyProfit) {
+                result += `<span style="color: green;">✅ עומד בחוק ה-30%! הרווח היומי הגבוה ($${highestDailyProfit.toFixed(2)}) הוא ${percentage.toFixed(2)}% מסך הרווחים, וזה פחות או שווה ל-30%.</span><br>`;
+            } else {
+                const requiredTotalProfits = highestDailyProfit / 0.3;
+                const additionalProfitsNeeded = requiredTotalProfits - totalProfits;
+                result += `<span style="color: red;">❌ לא עומד בחוק ה-30%. הרווח היומי הגבוה ($${highestDailyProfit.toFixed(2)}) הוא ${percentage.toFixed(2)}% מסך הרווחים.<br>צריך להגדיל את סך הרווחים ל-$${requiredTotalProfits.toFixed(2)} (עוד $${additionalProfitsNeeded.toFixed(2)}).</span><br>`;
+            }
+
+            // רווח יומי ממוצע ותשלום
+            result += `<b>רווח יומי ממוצע:</b> $${dailyAverageProfit.toFixed(2)} (${dailyAveragePercent.toFixed(2)}% מגודל התיק)<br>`;
+            result += `<b>סך הרווחים שלך:</b> $${totalProfits.toFixed(2)}<br>`;
+            result += `<b>תשלום לאחר חלוקת ${profitSplit * 100}%:</b> $${yourPayout.toFixed(2)}<br>`;
+
+            resultDiv.innerHTML = result;
+        }
+    </script>
+</body>
+</html>
